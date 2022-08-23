@@ -1,4 +1,4 @@
-module System.TimeIt(timeIt, timeItShow, timeItNamed, timeItT) where
+module System.TimeIt(timeIt, timeItShow, timeItNamed, timeItT, timePure) where
 import System.CPUTime
 import Text.Printf
 import Control.Monad.IO.Class (MonadIO(liftIO))
@@ -36,3 +36,17 @@ timeItT ioa = do
     let t :: Double
         t = fromIntegral (t2-t1) * 1e-12
     return (t, a)
+
+-- | Time a pure function and show the result
+timePure :: (MonadIO m, Show a) => a -> m a
+timePure y = timeItShow $ seq y (return y)
+
+-- | Example program timing a pure function:
+{- 
+module Main where
+import System.TimeIt ( timePure )
+
+main :: IO Double
+main = timePure $ sum 1000000
+-}
+-- Example End
