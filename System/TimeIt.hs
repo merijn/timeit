@@ -1,7 +1,9 @@
-module System.TimeIt(timeIt, timeItShow, timeItNamed, timeItT) where
+module System.TimeIt(timeIt, timeItShow, timeItNamed, timeItT, timeItUserspaceT) where
 import System.CPUTime
 import Text.Printf
 import Control.Monad.IO.Class (MonadIO(liftIO))
+
+import System.GetRUsage
 
 -- | Wrap a 'MonadIO' computation so that it prints out the execution time.
 timeIt :: MonadIO m => m a -> m a
@@ -28,11 +30,23 @@ timeItNamed name ioa = do
 
 -- | Wrap a 'MonadIO' computation so that it returns execution time in seconds,
 -- as well as the result value.
+--
+-- This function computes both user time and kernel time of the computation.
 timeItT :: MonadIO m => m a -> m (Double, a)
-timeItT ioa = do
-    t1 <- liftIO getCPUTime
+timeItT = timeItTWith getCPUTime
+
+-- | Wrap a 'MonadIO' computation so that it returns userspace execution time in seconds,
+-- as well as the result value.
+--
+-- @since 2.1
+timeItUserspaceT :: MonadIO m => m a -> m (Double, a)
+timeItUserspaceT = timeItTWith getUserspaceCPUTime
+
+timeItTWith :: MonadIO m => IO Integer -> m a -> m (Double, a)
+timeItTWith counter ioa = do
+    t1 <- liftIO counter
     a <- ioa
-    t2 <- liftIO getCPUTime
+    t2 <- liftIO counter
     let t :: Double
         t = fromIntegral (t2-t1) * 1e-12
     return (t, a)
